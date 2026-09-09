@@ -1,0 +1,63 @@
+name: Build Phone MCP APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - android-phone-mcp
+    paths:
+      - 'android-phone-mcp/**'
+      - '.github/workflows/android-phone-mcp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Add pinned cloudflared ARM64 helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p android-phone-mcp/app/src/main/jniLibs/arm64-v8a
+          curl --fail --location --retry 3 \
+            'https://github.com/cloudflare/cloudflared/releases/download/2026.8.3/cloudflared-linux-arm64' \
+            --output android-phone-mcp/app/src/main/jniLibs/arm64-v8a/libcloudflared.so
+          echo '6d517efc10dfce17440177bd7011909166eab44bae0f6998182183df717c7dba  android-phone-mcp/app/src/main/jniLibs/arm64-v8a/libcloudflared.so' | sha256sum --check
+          chmod 0755 android-phone-mcp/app/src/main/jniLibs/arm64-v8a/libcloudflared.so
+
+      - name: Build APK
+        working-directory: android-phone-mcp
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp android-phone-mcp/app/build/outputs/apk/debug/app-debug.apk out/PhoneMCP-arm64-debug.apk
+          sha256sum out/PhoneMCP-arm64-debug.apk > out/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhoneMCP-arm64-debug
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
