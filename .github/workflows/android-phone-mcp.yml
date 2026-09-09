@@ -42,7 +42,7 @@ jobs:
           curl --fail --location --retry 3 \
             'https://github.com/cloudflare/cloudflared/releases/download/2026.8.3/cloudflared-linux-arm64' \
             --output android-phone-mcp/app/src/main/jniLibs/arm64-v8a/libcloudflared.so
-          echo '6d517efc10dfce17440177bd7011909166eab44bae0f6998182183df717c7dba  android-phone-mcp/app/src/main/jniLibs/arm64-v8a/libcloudflared.so' | sha256sum --check
+          echo '4bcfd35521a7cbc545ebfd5d57334a71ee180e2a64874981f374c81472118391  android-phone-mcp/app/src/main/jniLibs/arm64-v8a/libcloudflared.so' | sha256sum --check
           chmod 0755 android-phone-mcp/app/src/main/jniLibs/arm64-v8a/libcloudflared.so
 
       - name: Build APK
